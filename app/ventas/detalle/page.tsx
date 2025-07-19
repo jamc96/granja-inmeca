@@ -1,26 +1,28 @@
 'use client'
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect, Suspense } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { ArrowLeft, Plus, Minus, Info, Settings } from "lucide-react"
+import { Plus, Minus, Info } from "lucide-react"
 import { getClientes, getPrecioPorTipo } from "@/lib/actions"
 import { formatCurrency } from "@/lib/utils"
+import { TopNav } from "@/components/top-nav"
 
-export default function VentaDetallePage() {
+function VentaDetalleContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [clientes, setClientes] = useState<Array<{id: number, nombre: string}>>([])
-  const [pesoTotalLibras, setPesoTotalLibras] = useState('')
-  const [cantidadPescados, setCantidadPescados] = useState('')
+  const [pesoTotalLibras, setPesoTotalLibras] = useState(searchParams.get('pesoTotalLibras') || '')
+  const [cantidadPescados, setCantidadPescados] = useState(searchParams.get('cantidadPescados') || '')
   const [precioPorLibra, setPrecioPorLibra] = useState(0)
-  const [clienteId, setClienteId] = useState('sin-cliente')
-  const [tipoPreparacion, setTipoPreparacion] = useState<'VIVO' | 'LIMPIO'>('VIVO')
-  const [notas, setNotas] = useState('')
+  const [clienteId, setClienteId] = useState('consumidor-final')
+  const [tipoPreparacion, setTipoPreparacion] = useState<'VIVO' | 'LIMPIO'>((searchParams.get('tipoPreparacion') as 'VIVO' | 'LIMPIO') || 'VIVO')
+  const [notas, setNotas] = useState(searchParams.get('notas') || '')
   const [showInfoModal, setShowInfoModal] = useState(false)
 
   // Cargar clientes al montar el componente
@@ -87,7 +89,7 @@ export default function VentaDetallePage() {
       cantidadPescados,
       pesoTotalLibras,
       precioPorLibra: precioPorLibra.toString(),
-      cliente: clienteId === 'sin-cliente' ? '' : clientes.find(c => c.id.toString() === clienteId)?.nombre || '',
+      cliente: clienteId === 'consumidor-final' ? 'Consumidor Final' : clientes.find(c => c.id.toString() === clienteId)?.nombre || '',
       notas,
       tipoPreparacion
     })
@@ -97,29 +99,7 @@ export default function VentaDetallePage() {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      {/* Navegación secundaria */}
-      <div className="bg-primary text-primary-foreground p-4">
-        <div className="flex items-center justify-between">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.back()}
-            className="text-primary-foreground hover:bg-primary/80"
-          >
-            <ArrowLeft className="h-5 w-5 mr-2" />
-            Atrás
-          </Button>
-          <h1 className="text-lg font-semibold">Venta Detalle</h1>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.push('/config')}
-            className="text-primary-foreground hover:bg-primary/80"
-          >
-            <Settings className="h-5 w-5" />
-          </Button>
-        </div>
-      </div>
+      <TopNav title="Venta Detalle" showBack={true} />
 
       {/* Calculadora de precio */}
       <div className="bg-green-100 p-4 mx-4 mt-4 rounded-lg">
@@ -214,15 +194,22 @@ export default function VentaDetallePage() {
           <Label htmlFor="tipoPreparacion" className="text-base font-medium">
             Preparación
           </Label>
-          <Select value={tipoPreparacion} onValueChange={(value: 'VIVO' | 'LIMPIO') => setTipoPreparacion(value)}>
-            <SelectTrigger className="h-12 text-lg w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="VIVO">Vivo</SelectItem>
-              <SelectItem value="LIMPIO">Limpio</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex space-x-3">
+            <Button
+              onClick={() => setTipoPreparacion('VIVO')}
+              variant={tipoPreparacion === 'VIVO' ? 'default' : 'outline'}
+              className="flex-1 h-12 text-lg"
+            >
+              Vivo
+            </Button>
+            <Button
+              onClick={() => setTipoPreparacion('LIMPIO')}
+              variant={tipoPreparacion === 'LIMPIO' ? 'default' : 'outline'}
+              className="flex-1 h-12 text-lg"
+            >
+              Limpio
+            </Button>
+          </div>
         </div>
 
         {/* Cliente */}
@@ -235,7 +222,7 @@ export default function VentaDetallePage() {
               <SelectValue placeholder="Seleccionar cliente" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="sin-cliente">Sin cliente</SelectItem>
+              <SelectItem value="consumidor-final">Consumidor Final</SelectItem>
               {clientes.map((cliente) => (
                 <SelectItem key={cliente.id} value={cliente.id.toString()}>
                   {cliente.nombre}
@@ -317,5 +304,20 @@ export default function VentaDetallePage() {
         </DialogContent>
       </Dialog>
     </div>
+  )
+}
+
+export default function VentaDetallePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Cargando...</p>
+        </div>
+      </div>
+    }>
+      <VentaDetalleContent />
+    </Suspense>
   )
 } 

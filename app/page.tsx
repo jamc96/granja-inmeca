@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge"
 import { prisma } from "@/lib/prisma"
 import { formatCurrency } from "@/lib/utils"
 import { Fish, Package, DollarSign, TrendingUp } from "lucide-react"
+import { TopNav } from "@/components/top-nav"
 
 async function getDashboardData() {
   const today = new Date()
@@ -43,18 +44,20 @@ export default async function DashboardPage() {
   const totalLibras = registroDiario.totalMayoreoLibras + registroDiario.totalDetalleLibras
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-        <Badge variant="secondary" className="text-sm">
-          {new Date().toLocaleDateString('es-ES', { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
-          })}
-        </Badge>
-      </div>
+    <div className="min-h-screen bg-background">
+      <TopNav title="Dashboard" />
+      
+      <div className="p-4 space-y-6">
+        <div className="flex items-center justify-between">
+          <Badge variant="secondary" className="text-sm">
+            {new Date().toLocaleDateString('es-ES', { 
+              weekday: 'long', 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            })}
+          </Badge>
+        </div>
 
       {/* Resumen de ventas */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -176,6 +179,7 @@ export default async function DashboardPage() {
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   )
 }

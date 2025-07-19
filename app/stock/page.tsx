@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Package, Edit, Fish, TrendingUp, TrendingDown } from "lucide-react"
+import { TopNav } from "@/components/top-nav"
 
 
 interface StockInfo {
@@ -63,16 +64,18 @@ export default function StockPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">Gestión de Stock</h1>
-        <Dialog open={showUpdateDialog} onOpenChange={setShowUpdateDialog}>
-          <DialogTrigger asChild>
-            <Button>
-              <Edit className="h-4 w-4 mr-2" />
-              Actualizar Stock
-            </Button>
-          </DialogTrigger>
+    <div className="min-h-screen bg-background">
+      <TopNav title="Gestión de Stock" />
+      
+      <div className="p-4 space-y-6">
+        <div className="flex items-center justify-between">
+          <Dialog open={showUpdateDialog} onOpenChange={setShowUpdateDialog}>
+            <DialogTrigger asChild>
+              <Button>
+                <Edit className="h-4 w-4 mr-2" />
+                Actualizar Stock
+              </Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Actualizar Stock</DialogTitle>
@@ -262,6 +265,7 @@ export default function StockPage() {
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   )
 } 

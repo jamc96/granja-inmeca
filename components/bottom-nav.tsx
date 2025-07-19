@@ -71,7 +71,7 @@ export function BottomNav() {
           {/* Botón central de venta */}
           <Button
             onClick={() => setIsSalesModalOpen(true)}
-            className="w-16 h-16 rounded-full bg-red-600 hover:bg-red-700 text-white shadow-lg"
+            className="w-16 h-16 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
           >
             <Plus className="h-8 w-8" />
           </Button>

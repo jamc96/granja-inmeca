@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Badge } from "@/components/ui/badge"
 import { Settings, Edit, Fish, Package, Save } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
+import { TopNav } from "@/components/top-nav"
 
 interface Configuracion {
   id: number
@@ -91,11 +92,13 @@ export default function ConfigPage() {
   const precioLimpioDetalle = getConfigValue("precioLimpioDetalle")
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">Configuración</h1>
-        <Settings className="h-6 w-6 text-primary" />
-      </div>
+    <div className="min-h-screen bg-background">
+      <TopNav title="Configuración" showSettings={false} />
+      
+      <div className="p-4 space-y-6">
+        <div className="flex items-center justify-between">
+          <Settings className="h-6 w-6 text-primary" />
+        </div>
 
       {/* Resumen de precios */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -261,6 +264,7 @@ export default function ConfigPage() {
           )}
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   )
 } 

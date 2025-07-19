@@ -29,11 +29,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background`}
       >
         <div className="min-h-screen flex flex-col">
-          <header className="bg-primary text-primary-foreground p-4 text-center shadow-sm">
-            <h1 className="text-xl font-semibold">Granja de Pescados</h1>
-          </header>
-          
-          <main className="flex-1 p-4 pb-28">
+          <main className="flex-1 pb-28">
             {children}
           </main>
           

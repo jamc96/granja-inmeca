@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft, CheckCircle } from "lucide-react"
+import { CheckCircle } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
 import { Suspense } from "react"
 import { useState } from "react"
+import { TopNav } from "@/components/top-nav"
 
 function ConfirmarVentaMayoreoContent() {
   const router = useRouter()
@@ -34,27 +35,20 @@ function ConfirmarVentaMayoreoContent() {
   }
 
   const handleCancelar = () => {
-    router.back()
+    // Reconstruir la URL con los datos originales para preservar el state
+    const params = new URLSearchParams({
+      pesajes: pesajes || '',
+      precioPorLibra: precioPorLibra || '',
+      cliente: cliente || '',
+      notas: notas || '',
+      tipoPreparacion: tipoPreparacion || ''
+    })
+    router.push(`/ventas/mayoreo?${params.toString()}`)
   }
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      {/* Header */}
-      <div className="bg-primary text-primary-foreground p-4">
-        <div className="flex items-center justify-between">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleCancelar}
-            className="text-primary-foreground hover:bg-primary/80"
-          >
-            <ArrowLeft className="h-5 w-5 mr-2" />
-            Atrás
-          </Button>
-          <h1 className="text-lg font-semibold">Registro de Venta</h1>
-          <div className="w-10" /> {/* Espaciador */}
-        </div>
-      </div>
+      <TopNav title="Registro de Venta" showBack={true} onBack={handleCancelar} />
 
       {/* Contenido */}
       <div className="p-4 space-y-6">
@@ -165,7 +159,7 @@ function ConfirmarVentaMayoreoContent() {
             onClick={handleCancelar}
             className="w-full h-12"
           >
-            Cancelar
+            Regresar
           </Button>
         </div>
       </div>

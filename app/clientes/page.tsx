@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Users, Plus, Search, Edit, Trash2 } from "lucide-react"
+import { TopNav } from "@/components/top-nav"
 
 interface Cliente {
   id: number
@@ -67,16 +68,18 @@ export default function ClientesPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">Gestión de Clientes</h1>
-        <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Agregar Cliente
-            </Button>
-          </DialogTrigger>
+    <div className="min-h-screen bg-background">
+      <TopNav title="Gestión de Clientes" />
+      
+      <div className="p-4 space-y-6">
+        <div className="flex items-center justify-between">
+          <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Agregar Cliente
+              </Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Agregar Nuevo Cliente</DialogTitle>
@@ -241,6 +244,7 @@ export default function ClientesPage() {
           )}
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   )
 } 
