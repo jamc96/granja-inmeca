@@ -3,13 +3,17 @@
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ArrowLeft, CheckCircle } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
 import { Suspense } from "react"
+import { useState } from "react"
 
 function ConfirmarVentaDetalleContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const [tipoPago, setTipoPago] = useState<'EFECTIVO' | 'CREDITO'>('EFECTIVO')
 
   // Obtener datos de la URL
   const cantidadPescados = searchParams.get('cantidadPescados')
@@ -18,7 +22,6 @@ function ConfirmarVentaDetalleContent() {
   const cliente = searchParams.get('cliente')
   const notas = searchParams.get('notas')
   const tipoPreparacion = searchParams.get('tipoPreparacion')
-  const tipoPago = searchParams.get('tipoPago')
 
   const totalPrecio = parseFloat(pesoTotalLibras || '0') * parseFloat(precioPorLibra || '0')
 
@@ -107,11 +110,17 @@ function ConfirmarVentaDetalleContent() {
               </Badge>
             </div>
             
-            <div className="flex justify-between items-center">
-              <span className="font-medium">Pago:</span>
-              <Badge variant={tipoPago === 'EFECTIVO' ? 'default' : 'destructive'}>
-                {tipoPago}
-              </Badge>
+            <div className="space-y-2">
+              <Label className="text-base font-medium">Tipo de Pago</Label>
+              <Select value={tipoPago} onValueChange={(value: 'EFECTIVO' | 'CREDITO') => setTipoPago(value)}>
+                <SelectTrigger className="h-12 text-lg w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="EFECTIVO">Efectivo</SelectItem>
+                  <SelectItem value="CREDITO">Crédito</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             
             {notas && (

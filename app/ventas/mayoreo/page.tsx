@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft, Plus, Minus, Info, Trash2 } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { ArrowLeft, Plus, Minus, Info, Settings, Trash2 } from "lucide-react"
 import { getClientes, getPrecioPorTipo } from "@/lib/actions"
 import { formatCurrency } from "@/lib/utils"
 
@@ -17,9 +18,9 @@ export default function VentaMayoreoPage() {
   const [precioPorLibra, setPrecioPorLibra] = useState(0)
   const [clienteId, setClienteId] = useState('sin-cliente')
   const [tipoPreparacion, setTipoPreparacion] = useState<'VIVO' | 'LIMPIO'>('VIVO')
-  const [tipoPago, setTipoPago] = useState<'EFECTIVO' | 'CREDITO'>('EFECTIVO')
   const [notas, setNotas] = useState('')
   const [pesajes, setPesajes] = useState<Array<{pesoLibras: string, notas: string}>>([])
+  const [showInfoModal, setShowInfoModal] = useState(false)
 
   // Cargar clientes al montar el componente
   useEffect(() => {
@@ -87,8 +88,7 @@ export default function VentaMayoreoPage() {
       precioPorLibra: precioPorLibra.toString(),
       cliente: clienteId === 'sin-cliente' ? '' : clientes.find(c => c.id.toString() === clienteId)?.nombre || '',
       notas,
-      tipoPreparacion,
-      tipoPago
+      tipoPreparacion
     })
 
     router.push(`/ventas/mayoreo/confirmar?${params.toString()}`)
@@ -96,7 +96,7 @@ export default function VentaMayoreoPage() {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      {/* Header */}
+      {/* Navegación secundaria */}
       <div className="bg-primary text-primary-foreground p-4">
         <div className="flex items-center justify-between">
           <Button
@@ -109,7 +109,14 @@ export default function VentaMayoreoPage() {
             Atrás
           </Button>
           <h1 className="text-lg font-semibold">Venta Mayoreo</h1>
-          <div className="w-10" /> {/* Espaciador */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.push('/config')}
+            className="text-primary-foreground hover:bg-primary/80"
+          >
+            <Settings className="h-5 w-5" />
+          </Button>
         </div>
       </div>
 
@@ -119,7 +126,12 @@ export default function VentaMayoreoPage() {
           <span className="text-lg font-semibold text-green-800">
             Precio Total: {formatCurrency(precioTotal)}
           </span>
-          <Button variant="ghost" size="sm" className="text-green-800">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-green-800"
+            onClick={() => setShowInfoModal(true)}
+          >
             <Info className="h-4 w-4" />
           </Button>
         </div>
@@ -127,33 +139,13 @@ export default function VentaMayoreoPage() {
 
       {/* Formulario */}
       <div className="p-4 space-y-6">
-        {/* Cliente */}
-        <div className="space-y-2">
-          <Label htmlFor="cliente" className="text-base font-medium">
-            Cliente
-          </Label>
-          <Select value={clienteId} onValueChange={setClienteId}>
-            <SelectTrigger className="h-12 text-lg">
-              <SelectValue placeholder="Seleccionar cliente" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="sin-cliente">Sin cliente</SelectItem>
-              {clientes.map((cliente) => (
-                <SelectItem key={cliente.id} value={cliente.id.toString()}>
-                  {cliente.nombre}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
         {/* Tipo de preparación */}
         <div className="space-y-2">
           <Label htmlFor="tipoPreparacion" className="text-base font-medium">
             Preparación
           </Label>
           <Select value={tipoPreparacion} onValueChange={(value: 'VIVO' | 'LIMPIO') => setTipoPreparacion(value)}>
-            <SelectTrigger className="h-12 text-lg">
+            <SelectTrigger className="h-12 text-lg w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -163,18 +155,22 @@ export default function VentaMayoreoPage() {
           </Select>
         </div>
 
-        {/* Tipo de pago */}
+        {/* Cliente */}
         <div className="space-y-2">
-          <Label htmlFor="tipoPago" className="text-base font-medium">
-            Tipo de Pago
+          <Label htmlFor="cliente" className="text-base font-medium">
+            Cliente
           </Label>
-          <Select value={tipoPago} onValueChange={(value: 'EFECTIVO' | 'CREDITO') => setTipoPago(value)}>
-            <SelectTrigger className="h-12 text-lg">
-              <SelectValue />
+          <Select value={clienteId} onValueChange={setClienteId}>
+            <SelectTrigger className="h-12 text-lg w-full">
+              <SelectValue placeholder="Seleccionar cliente" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="EFECTIVO">Efectivo</SelectItem>
-              <SelectItem value="CREDITO">Crédito</SelectItem>
+              <SelectItem value="sin-cliente">Sin cliente</SelectItem>
+              {clientes.map((cliente) => (
+                <SelectItem key={cliente.id} value={cliente.id.toString()}>
+                  {cliente.nombre}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -245,7 +241,7 @@ export default function VentaMayoreoPage() {
                   value={pesaje.notas}
                   onChange={(e) => actualizarPesaje(index, 'notas', e.target.value)}
                   placeholder="Notas de esta canasta..."
-                  className="h-10"
+                  className="h-10 w-full"
                 />
               </div>
             </div>
@@ -269,7 +265,7 @@ export default function VentaMayoreoPage() {
             value={notas}
             onChange={(e) => setNotas(e.target.value)}
             placeholder="Notas adicionales..."
-            className="min-h-24 text-base"
+            className="min-h-24 text-base w-full"
           />
         </div>
 
@@ -282,6 +278,54 @@ export default function VentaMayoreoPage() {
           Registrar Venta
         </Button>
       </div>
+
+      {/* Modal informativo */}
+      <Dialog open={showInfoModal} onOpenChange={setShowInfoModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-center">Información del Precio</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 p-4">
+            <div className="space-y-3">
+              <h3 className="font-semibold text-lg">Cálculo del Precio Total</h3>
+              <p className="text-sm text-muted-foreground">
+                El precio total se calcula multiplicando el peso total por el precio por libra:
+              </p>
+              <div className="bg-muted p-3 rounded-lg">
+                <p className="font-mono text-sm">
+                  Precio Total = Peso Total (lbs) × Precio por Libra
+                </p>
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              <h3 className="font-semibold">Precios por Preparación</h3>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span>Pescado Vivo:</span>
+                  <span className="font-medium">{formatCurrency(38)}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Pescado Limpio:</span>
+                  <span className="font-medium">{formatCurrency(38)}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <h3 className="font-semibold">Ejemplo</h3>
+              <p className="text-sm text-muted-foreground">
+                Si vendes 50 lbs de pescado vivo a {formatCurrency(38)} por libra:
+              </p>
+              <div className="bg-muted p-3 rounded-lg">
+                <p className="font-mono text-sm">
+                  50 lbs × {formatCurrency(38)} = {formatCurrency(1900)}
+                </p>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 } 
