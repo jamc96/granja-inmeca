@@ -43,6 +43,10 @@ export default async function DashboardPage() {
   const totalVentas = registroDiario.totalMayoreoPrecio + registroDiario.totalDetallePrecio
   const totalLibras = registroDiario.totalMayoreoLibras + registroDiario.totalDetalleLibras
 
+  // Calcular estadísticas adicionales
+  const hasVentas = registroDiario.totalMayoreoPrecio > 0 || registroDiario.totalDetallePrecio > 0
+  const hasStock = stockActual.cantidadPescados > 0
+
   return (
     <div className="min-h-screen bg-background">
       <TopNav title="Dashboard" />
@@ -57,6 +61,12 @@ export default async function DashboardPage() {
               day: 'numeric' 
             })}
           </Badge>
+          <a 
+            href="/reportes" 
+            className="text-sm text-primary hover:underline"
+          >
+            Ver reportes detallados →
+          </a>
         </div>
 
       {/* Resumen de ventas */}
@@ -69,9 +79,7 @@ export default async function DashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(totalVentas)}</div>
             <p className="text-xs text-muted-foreground">
-              {registroDiario.totalMayoreoPrecio > 0 || registroDiario.totalDetallePrecio > 0 
-                ? "Hoy" 
-                : "Sin ventas hoy"}
+              {hasVentas ? "Hoy" : "Sin ventas hoy"}
             </p>
           </CardContent>
         </Card>
@@ -84,9 +92,7 @@ export default async function DashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">{totalLibras.toFixed(1)} lbs</div>
             <p className="text-xs text-muted-foreground">
-              {registroDiario.totalMayoreoLibras > 0 || registroDiario.totalDetalleLibras > 0 
-                ? "Vendidas hoy" 
-                : "Sin ventas hoy"}
+              {hasVentas ? "Vendidas hoy" : "Sin ventas hoy"}
             </p>
           </CardContent>
         </Card>
@@ -112,9 +118,7 @@ export default async function DashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">{stockActual.cantidadPescados}</div>
             <p className="text-xs text-muted-foreground">
-              {stockActual.pesoTotalLibras && stockActual.pesoTotalLibras > 0 
-                ? `${stockActual.pesoTotalLibras.toFixed(1)} lbs` 
-                : "Sin stock"}
+              {hasStock ? `${stockActual.pesoTotalLibras?.toFixed(1) || '0.0'} lbs` : "Sin stock"}
             </p>
           </CardContent>
         </Card>
