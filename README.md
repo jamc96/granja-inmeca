@@ -27,7 +27,7 @@ Sistema de gestión para granja de pescados (tilapia) con enfoque en ventas al m
 
 - Node.js 18+ 
 - PostgreSQL
-- npm o yarn
+- pnpm (recomendado) o npm
 
 ## 🔧 Instalación
 
@@ -39,7 +39,7 @@ cd granja-inmeca
 
 2. **Instala las dependencias**
 ```bash
-npm install
+pnpm install
 ```
 
 3. **Configura las variables de entorno**
@@ -51,15 +51,15 @@ DATABASE_URL="postgresql://usuario:contraseña@localhost:5432/granja_inmeca"
 4. **Configura la base de datos**
 ```bash
 # Crea las tablas en la base de datos
-npm run db:push
+pnpm run db:push
 
 # Ejecuta el seed para datos iniciales
-npm run db:seed
+pnpm run db:seed
 ```
 
 5. **Inicia el servidor de desarrollo**
 ```bash
-npm run dev
+pnpm run dev
 ```
 
 La aplicación estará disponible en `http://localhost:3000`
@@ -124,18 +124,18 @@ La aplicación utiliza un schema de Prisma con las siguientes entidades principa
 
 ```bash
 # Desarrollo
-npm run dev
+pnpm run dev
 
 # Construcción
-npm run build
+pnpm run build
 
 # Producción
-npm run start
+pnpm run start
 
 # Base de datos
-npm run db:push    # Sincronizar schema
-npm run db:seed    # Poblar datos iniciales
-npm run db:studio  # Abrir Prisma Studio
+pnpm run db:push    # Sincronizar schema
+pnpm run db:seed    # Poblar datos iniciales
+pnpm run db:studio  # Abrir Prisma Studio
 ```
 
 ## 🎨 Personalización
