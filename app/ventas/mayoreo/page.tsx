@@ -1,51 +1,33 @@
-"use client"
+'use client'
 
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Package, Plus, Trash2, Calculator } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ArrowLeft, Plus, Minus, Info, Trash2 } from "lucide-react"
+import { getClientes, getPrecioPorTipo } from "@/lib/actions"
 import { formatCurrency } from "@/lib/utils"
-import { createVentaMayoreo, getClientes, getPrecioPorTipo } from "@/lib/actions"
-import { useRouter } from "next/navigation"
-
-interface Pesaje {
-  id: string
-  pesoLibras: number
-  notas?: string
-}
 
 export default function VentaMayoreoPage() {
   const router = useRouter()
-  const [clienteId, setClienteId] = useState<string>("")
-  const [tipoPreparacion, setTipoPreparacion] = useState<"VIVO" | "LIMPIO">("VIVO")
-  const [precioPorLibra, setPrecioPorLibra] = useState<number>(38)
-  const [tipoPago, setTipoPago] = useState<"EFECTIVO" | "CREDITO">("EFECTIVO")
-  const [notas, setNotas] = useState("")
-  const [pesajes, setPesajes] = useState<Pesaje[]>([])
-  const [nuevoPesaje, setNuevoPesaje] = useState({ pesoLibras: "", notas: "" })
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false)
   const [clientes, setClientes] = useState<Array<{id: number, nombre: string}>>([])
-  const [isLoading, setIsLoading] = useState(false)
+  const [precioPorLibra, setPrecioPorLibra] = useState(0)
+  const [clienteId, setClienteId] = useState('sin-cliente')
+  const [tipoPreparacion, setTipoPreparacion] = useState<'VIVO' | 'LIMPIO'>('VIVO')
+  const [tipoPago, setTipoPago] = useState<'EFECTIVO' | 'CREDITO'>('EFECTIVO')
+  const [notas, setNotas] = useState('')
+  const [pesajes, setPesajes] = useState<Array<{pesoLibras: string, notas: string}>>([])
 
-  const totalLibras = pesajes.reduce((sum, pesaje) => sum + pesaje.pesoLibras, 0)
-  const totalPrecio = totalLibras * precioPorLibra
-
-  // Cargar clientes y precios al montar el componente
+  // Cargar clientes al montar el componente
   useEffect(() => {
-    const cargarDatos = async () => {
+    const cargarClientes = async () => {
       const clientesData = await getClientes()
       setClientes(clientesData)
-      
-      // Cargar precio por defecto
-      const precio = await getPrecioPorTipo(tipoPreparacion, true)
-      setPrecioPorLibra(precio)
     }
-    cargarDatos()
+    cargarClientes()
   }, [])
 
   // Actualizar precio cuando cambie el tipo de preparación
@@ -57,271 +39,249 @@ export default function VentaMayoreoPage() {
     actualizarPrecio()
   }, [tipoPreparacion])
 
+  // Calcular precio total
+  const totalLibras = pesajes.reduce((sum, pesaje) => sum + parseFloat(pesaje.pesoLibras || '0'), 0)
+  const precioTotal = totalLibras * precioPorLibra
+
   const agregarPesaje = () => {
-    if (nuevoPesaje.pesoLibras) {
-      const pesaje: Pesaje = {
-        id: Date.now().toString(),
-        pesoLibras: parseFloat(nuevoPesaje.pesoLibras),
-        notas: nuevoPesaje.notas || undefined
-      }
-      setPesajes([...pesajes, pesaje])
-      setNuevoPesaje({ pesoLibras: "", notas: "" })
+    setPesajes([...pesajes, { pesoLibras: '', notas: '' }])
+  }
+
+  const eliminarPesaje = (index: number) => {
+    setPesajes(pesajes.filter((_, i) => i !== index))
+  }
+
+  const actualizarPesaje = (index: number, campo: 'pesoLibras' | 'notas', valor: string) => {
+    const nuevosPesajes = [...pesajes]
+    nuevosPesajes[index] = { ...nuevosPesajes[index], [campo]: valor }
+    setPesajes(nuevosPesajes)
+  }
+
+  const incrementarPeso = (index: number) => {
+    const actual = parseFloat(pesajes[index]?.pesoLibras || '0')
+    actualizarPesaje(index, 'pesoLibras', (actual + 0.5).toFixed(1))
+  }
+
+  const decrementarPeso = (index: number) => {
+    const actual = parseFloat(pesajes[index]?.pesoLibras || '0')
+    if (actual > 0) {
+      actualizarPesaje(index, 'pesoLibras', (actual - 0.5).toFixed(1))
     }
   }
 
-  const eliminarPesaje = (id: string) => {
-    setPesajes(pesajes.filter(p => p.id !== id))
-  }
-
-  const handleSubmit = async () => {
+  const handleRegistrarVenta = () => {
     if (pesajes.length === 0) {
-      alert("Debes agregar al menos un pesaje")
+      alert('Debes agregar al menos un pesaje')
       return
     }
 
-    setShowConfirmDialog(true)
-  }
-
-  const confirmarVenta = async () => {
-    setIsLoading(true)
-    try {
-      const result = await createVentaMayoreo({
-        clienteId: clienteId || undefined,
-        tipoPreparacion,
-        precioPorLibra,
-        tipoPago,
-        notas: notas || undefined,
-        pesajes: pesajes.map(p => ({ pesoLibras: p.pesoLibras, notas: p.notas }))
-      })
-      
-      if (result.success) {
-        alert("Venta registrada exitosamente")
-        router.push("/")
-      } else {
-        alert("Error al registrar la venta: " + result.error)
-      }
-    } catch (error) {
-      console.error("Error al guardar la venta:", error)
-      alert("Error al guardar la venta")
-    } finally {
-      setIsLoading(false)
-      setShowConfirmDialog(false)
+    const pesajesValidos = pesajes.filter(p => p.pesoLibras && parseFloat(p.pesoLibras) > 0)
+    if (pesajesValidos.length === 0) {
+      alert('Debes completar al menos un pesaje válido')
+      return
     }
+
+    // Construir URL con parámetros
+    const params = new URLSearchParams({
+      pesajes: encodeURIComponent(JSON.stringify(pesajesValidos)),
+      precioPorLibra: precioPorLibra.toString(),
+      cliente: clienteId === 'sin-cliente' ? '' : clientes.find(c => c.id.toString() === clienteId)?.nombre || '',
+      notas,
+      tipoPreparacion,
+      tipoPago
+    })
+
+    router.push(`/ventas/mayoreo/confirmar?${params.toString()}`)
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">Venta Mayoreo</h1>
-        <Package className="h-6 w-6 text-primary" />
+    <div className="min-h-screen bg-background pb-20">
+      {/* Header */}
+      <div className="bg-primary text-primary-foreground p-4">
+        <div className="flex items-center justify-between">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.back()}
+            className="text-primary-foreground hover:bg-primary/80"
+          >
+            <ArrowLeft className="h-5 w-5 mr-2" />
+            Atrás
+          </Button>
+          <h1 className="text-lg font-semibold">Venta Mayoreo</h1>
+          <div className="w-10" /> {/* Espaciador */}
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Formulario principal */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Información de la Venta</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="cliente">Cliente</Label>
-              <Select value={clienteId} onValueChange={setClienteId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar cliente" />
-                </SelectTrigger>
-                <SelectContent>
-                  {clientes.map((cliente) => (
-                    <SelectItem key={cliente.id} value={cliente.id.toString()}>
-                      {cliente.nombre}
-                    </SelectItem>
-                  ))}
-                  <SelectItem value="nuevo">+ Agregar nuevo cliente</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="preparacion">Preparación</Label>
-              <Select value={tipoPreparacion} onValueChange={(value: "VIVO" | "LIMPIO") => setTipoPreparacion(value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="VIVO">Vivo</SelectItem>
-                  <SelectItem value="LIMPIO">Limpio</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="precio">Precio por Libra</Label>
-              <Input
-                id="precio"
-                type="number"
-                step="0.01"
-                value={precioPorLibra}
-                onChange={(e) => setPrecioPorLibra(parseFloat(e.target.value) || 0)}
-                className="text-right"
-                disabled
-              />
-              <p className="text-xs text-muted-foreground">
-                Precio automático según configuración
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="pago">Tipo de Pago</Label>
-              <Select value={tipoPago} onValueChange={(value: "EFECTIVO" | "CREDITO") => setTipoPago(value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="EFECTIVO">Efectivo</SelectItem>
-                  <SelectItem value="CREDITO">Crédito</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="notas">Notas</Label>
-              <Textarea
-                id="notas"
-                value={notas}
-                onChange={(e) => setNotas(e.target.value)}
-                placeholder="Notas adicionales..."
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Resumen y totales */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Resumen</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Total Libras:</span>
-                <span className="font-medium">{totalLibras.toFixed(1)} lbs</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Precio por Libra:</span>
-                <span className="font-medium">{formatCurrency(precioPorLibra)}</span>
-              </div>
-              <div className="flex justify-between text-lg font-bold">
-                <span>Total:</span>
-                <span className="text-primary">{formatCurrency(totalPrecio)}</span>
-              </div>
-            </div>
-
-            <div className="pt-4">
-              <Button 
-                onClick={handleSubmit} 
-                className="w-full" 
-                disabled={pesajes.length === 0 || isLoading}
-              >
-                <Calculator className="h-4 w-4 mr-2" />
-                {isLoading ? "Guardando..." : "Registrar Venta"}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Calculadora de precio */}
+      <div className="bg-green-100 p-4 mx-4 mt-4 rounded-lg">
+        <div className="flex items-center justify-between">
+          <span className="text-lg font-semibold text-green-800">
+            Precio Total: {formatCurrency(precioTotal)}
+          </span>
+          <Button variant="ghost" size="sm" className="text-green-800">
+            <Info className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
-      {/* Pesajes */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Pesajes</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Agregar nuevo pesaje */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="peso">Peso (lbs)</Label>
-              <Input
-                id="peso"
-                type="number"
-                step="0.1"
-                value={nuevoPesaje.pesoLibras}
-                onChange={(e) => setNuevoPesaje({...nuevoPesaje, pesoLibras: e.target.value})}
-                placeholder="0.0"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="notas-pesaje">Notas</Label>
-              <Input
-                id="notas-pesaje"
-                value={nuevoPesaje.notas}
-                onChange={(e) => setNuevoPesaje({...nuevoPesaje, notas: e.target.value})}
-                placeholder="Opcional"
-              />
-            </div>
-            <div className="flex items-end">
-              <Button onClick={agregarPesaje} className="w-full" disabled={!nuevoPesaje.pesoLibras}>
-                <Plus className="h-4 w-4 mr-2" />
-                Agregar
-              </Button>
-            </div>
+      {/* Formulario */}
+      <div className="p-4 space-y-6">
+        {/* Cliente */}
+        <div className="space-y-2">
+          <Label htmlFor="cliente" className="text-base font-medium">
+            Cliente
+          </Label>
+          <Select value={clienteId} onValueChange={setClienteId}>
+            <SelectTrigger className="h-12 text-lg">
+              <SelectValue placeholder="Seleccionar cliente" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="sin-cliente">Sin cliente</SelectItem>
+              {clientes.map((cliente) => (
+                <SelectItem key={cliente.id} value={cliente.id.toString()}>
+                  {cliente.nombre}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Tipo de preparación */}
+        <div className="space-y-2">
+          <Label htmlFor="tipoPreparacion" className="text-base font-medium">
+            Preparación
+          </Label>
+          <Select value={tipoPreparacion} onValueChange={(value: 'VIVO' | 'LIMPIO') => setTipoPreparacion(value)}>
+            <SelectTrigger className="h-12 text-lg">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="VIVO">Vivo</SelectItem>
+              <SelectItem value="LIMPIO">Limpio</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Tipo de pago */}
+        <div className="space-y-2">
+          <Label htmlFor="tipoPago" className="text-base font-medium">
+            Tipo de Pago
+          </Label>
+          <Select value={tipoPago} onValueChange={(value: 'EFECTIVO' | 'CREDITO') => setTipoPago(value)}>
+            <SelectTrigger className="h-12 text-lg">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="EFECTIVO">Efectivo</SelectItem>
+              <SelectItem value="CREDITO">Crédito</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Pesajes */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Label className="text-base font-medium">Pesajes (Canastas)</Label>
+            <Button
+              onClick={agregarPesaje}
+              variant="outline"
+              size="sm"
+              className="h-10"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Agregar Canasta
+            </Button>
           </div>
 
-          {/* Lista de pesajes */}
-          {pesajes.length > 0 && (
-            <div className="space-y-2">
-              <Label>Pesajes Registrados</Label>
-              <div className="space-y-2">
-                {pesajes.map((pesaje) => (
-                  <div key={pesaje.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                    <div>
-                      <span className="font-medium">{pesaje.pesoLibras.toFixed(1)} lbs</span>
-                      {pesaje.notas && (
-                        <span className="text-sm text-muted-foreground ml-2">- {pesaje.notas}</span>
-                      )}
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => eliminarPesaje(pesaje.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
+          {pesajes.map((pesaje, index) => (
+            <div key={index} className="space-y-3 p-4 border rounded-lg">
+              <div className="flex items-center justify-between">
+                <span className="font-medium">Canasta {index + 1}</span>
+                <Button
+                  onClick={() => eliminarPesaje(index)}
+                  variant="ghost"
+                  size="sm"
+                  className="text-red-600 hover:text-red-700"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm">Peso (lbs)</Label>
+                <div className="flex items-center space-x-3">
+                  <Input
+                    type="number"
+                    step="0.1"
+                    value={pesaje.pesoLibras}
+                    onChange={(e) => actualizarPesaje(index, 'pesoLibras', e.target.value)}
+                    placeholder="0.0"
+                    className="flex-1 h-12 text-lg"
+                    inputMode="decimal"
+                  />
+                  <Button
+                    onClick={() => decrementarPeso(index)}
+                    variant="outline"
+                    size="icon"
+                    className="h-12 w-12"
+                  >
+                    <Minus className="h-6 w-6" />
+                  </Button>
+                  <Button
+                    onClick={() => incrementarPeso(index)}
+                    variant="outline"
+                    size="icon"
+                    className="h-12 w-12"
+                  >
+                    <Plus className="h-6 w-6" />
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm">Notas (opcional)</Label>
+                <Input
+                  value={pesaje.notas}
+                  onChange={(e) => actualizarPesaje(index, 'notas', e.target.value)}
+                  placeholder="Notas de esta canasta..."
+                  className="h-10"
+                />
+              </div>
+            </div>
+          ))}
+
+          {pesajes.length === 0 && (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>No hay pesajes agregados</p>
+              <p className="text-sm">Agrega al menos una canasta para continuar</p>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Dialog de confirmación */}
-      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirmar Venta</DialogTitle>
-            <DialogDescription>
-              ¿Estás seguro de que quieres registrar esta venta?
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span>Total Libras:</span>
-              <span className="font-medium">{totalLibras.toFixed(1)} lbs</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Total:</span>
-              <span className="font-bold text-primary">{formatCurrency(totalPrecio)}</span>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowConfirmDialog(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={confirmarVenta} disabled={isLoading}>
-              {isLoading ? "Guardando..." : "Confirmar"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        {/* Notas generales */}
+        <div className="space-y-2">
+          <Label htmlFor="notas" className="text-base font-medium">
+            Nota General
+          </Label>
+          <Textarea
+            id="notas"
+            value={notas}
+            onChange={(e) => setNotas(e.target.value)}
+            placeholder="Notas adicionales..."
+            className="min-h-24 text-base"
+          />
+        </div>
+
+        {/* Botón registrar */}
+        <Button
+          onClick={handleRegistrarVenta}
+          disabled={pesajes.length === 0}
+          className="w-full h-14 text-lg font-semibold bg-green-600 hover:bg-green-700"
+        >
+          Registrar Venta
+        </Button>
+      </div>
     </div>
   )
 } 
