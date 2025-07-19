@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Package, Edit, Fish, TrendingUp, TrendingDown } from "lucide-react"
-import { formatCurrency } from "@/lib/utils"
+
 
 interface StockInfo {
   cantidadPescados: number

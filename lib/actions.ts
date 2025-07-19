@@ -2,6 +2,7 @@
 
 import { prisma } from './prisma'
 import { revalidatePath } from 'next/cache'
+import type { Cliente, Configuracion } from '@prisma/client'
 
 export async function createVentaMayoreo(data: {
   clienteId?: string
@@ -10,7 +11,7 @@ export async function createVentaMayoreo(data: {
   tipoPago: 'EFECTIVO' | 'CREDITO'
   notas?: string
   pesajes: Array<{ pesoLibras: number; notas?: string }>
-}) {
+}): Promise<{ success: boolean; ventaId?: number; error?: string }> {
   try {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
@@ -56,7 +57,7 @@ export async function createVentaMayoreo(data: {
     })
 
     // Crear detalle mayoreo con pesajes
-    const detalleMayoreo = await prisma.detalleMayoreo.create({
+    await prisma.detalleMayoreo.create({
       data: {
         ventaId: venta.id,
         pesajes: {
@@ -98,7 +99,7 @@ export async function createVentaDetalle(data: {
   precioPorLibra: number
   tipoPago: 'EFECTIVO' | 'CREDITO'
   notas?: string
-}) {
+}): Promise<{ success: boolean; ventaId?: number; error?: string }> {
   try {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
@@ -192,7 +193,7 @@ export async function createVentaDetalle(data: {
   }
 }
 
-export async function getClientes() {
+export async function getClientes(): Promise<Cliente[]> {
   try {
     const clientes = await prisma.cliente.findMany({
       orderBy: { nombre: 'asc' }
@@ -204,7 +205,7 @@ export async function getClientes() {
   }
 }
 
-export async function getConfiguraciones() {
+export async function getConfiguraciones(): Promise<Configuracion[]> {
   try {
     const configs = await prisma.configuracion.findMany({
       orderBy: { clave: 'asc' }
@@ -216,7 +217,7 @@ export async function getConfiguraciones() {
   }
 }
 
-export async function getPrecioPorTipo(tipo: 'VIVO' | 'LIMPIO', esMayoreo: boolean) {
+export async function getPrecioPorTipo(tipo: 'VIVO' | 'LIMPIO', esMayoreo: boolean): Promise<number> {
   try {
     const clave = esMayoreo 
       ? (tipo === 'VIVO' ? 'precioVivoDefault' : 'precioLimpioDefault')

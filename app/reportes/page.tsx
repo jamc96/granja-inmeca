@@ -4,8 +4,30 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { prisma } from "@/lib/prisma"
 import { formatCurrency } from "@/lib/utils"
 import { BarChart3, Calendar, DollarSign, Package, Fish } from "lucide-react"
+import type { Venta, Cliente, Usuario, DetalleMayoreo, DetalleVenta, Pesaje } from "@prisma/client"
 
-async function getReporteData() {
+// Forzar renderizado dinámico para evitar errores de build
+export const dynamic = 'force-dynamic'
+
+type VentaWithRelations = Venta & {
+  cliente: Cliente | null
+  usuario: Usuario
+  detalleMayoreo: (DetalleMayoreo & {
+    pesajes: Pesaje[]
+  }) | null
+  detalleVenta: DetalleVenta | null
+}
+
+async function getReporteData(): Promise<{
+  registroDiario: {
+    totalMayoreoLibras: number
+    totalMayoreoPrecio: number
+    totalDetalleLibras: number
+    totalDetallePrecio: number
+    totalPagosPendientes: number
+  }
+  ventas: VentaWithRelations[]
+}> {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
@@ -42,7 +64,7 @@ async function getReporteData() {
       totalDetallePrecio: 0,
       totalPagosPendientes: 0,
     },
-    ventas
+    ventas: ventas as VentaWithRelations[]
   }
 }
 
