@@ -1,0 +1,149 @@
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+  }
+  
+  generator client {
+    provider = "prisma-client-js"
+  }
+  
+  // Enum para tipos de venta (para diferenciar en la tabla principal)
+  enum TipoVenta {
+    MAYOREO
+    DETALLE
+  }
+  
+  // Enum para estados/preparaciones del pescado (solo Vivo y Limpio)
+  enum TipoPreparacion {
+    VIVO
+    LIMPIO
+  }
+  
+  // Enum para tipos de pago
+  enum TipoPago {
+    EFECTIVO
+    CREDITO
+  }
+  
+  // Enum para roles de usuario
+  enum RolUsuario {
+    ADMIN
+    VENDEDOR
+  }
+  
+  // Enum para puntos de venta
+  enum TipoPuntoVenta {
+    GRANJA    // Para mayoreo
+    CIUDAD    // Para detalle
+  }
+  
+  model Preparacion {
+    id                  Int               @id @default(autoincrement())
+    tipo                TipoPreparacion   @unique
+    multiplicador       Float             @default(1.0) // Opcional: factor para ajustes, ej. Limpio podría ser más caro
+    preciosCliente      PrecioCliente[]
+    // Nota: Precios defaults ahora en Configuracion; este model se enfoca en tipos
+  }
+  
+  model Cliente {
+    id             Int            @id @default(autoincrement())
+    nombre         String
+    contacto       String?        // Email/teléfono
+    esFrecuente    Boolean        @default(false) // Bandera para clientes frecuentes, actualizable basado en ventas
+    ventas         Venta[]
+    precios        PrecioCliente[] // Precios personalizados
+  }
+  
+  model PrecioCliente {
+    id                  Int            @id @default(autoincrement())
+    clienteId           Int
+    preparacionId       Int?           // Opcional, si el precio custom es por preparación
+    precioPorLibra      Float          // Precio override por cliente (para mayoreo o detalle)
+    esMayoreo           Boolean        @default(true) // True si aplica solo a mayoreo
+    fechaActualizacion  DateTime       @default(now()) @updatedAt
+    cliente             Cliente        @relation(fields: [clienteId], references: [id])
+    preparacion         Preparacion?   @relation(fields: [preparacionId], references: [id])
+  }
+  
+  model StockDetalle {
+    id                Int               @id @default(autoincrement())
+    fecha             DateTime          @default(now()) // Stock por día o actualización
+    cantidadPescados  Int               // Número de tilapias disponibles para detalle
+    pesoTotalLibras   Float?            // Peso total estimado (opcional, ya que se pesa al vender)
+    puntoVenta        TipoPuntoVenta    @default(CIUDAD) // Principalmente para ciudad/detalle
+    actualizadoEn     DateTime          @updatedAt
+    // Relación opcional con ventas para restar, pero lógica en la app
+  }
+  
+  model Usuario {
+    id             Int           @id @default(autoincrement())
+    nombre         String
+    rol            RolUsuario
+    ventas         Venta[]       // Ventas registradas por este usuario
+  }
+  
+  model Venta {
+    id                Int              @id @default(autoincrement())
+    tipoVenta         TipoVenta        // MAYOREO o DETALLE
+    clienteId         Int?
+    usuarioId         Int              // Vendedor que registra
+    puntoVenta        TipoPuntoVenta   // GRANJA o CIUDAD
+    fecha             DateTime         @default(now())
+    tipoPreparacion   TipoPreparacion  @default(VIVO) // Preparación general (VIVO por default)
+    precioPorLibra    Float            // Precio usado (default o custom)
+    totalLibras       Float            @default(0) // Libras totales vendidas (sincronizado con detalle)
+    totalPrecio       Float            @default(0) // Calculado automáticamente
+    tipoPago          TipoPago         @default(EFECTIVO)
+    pagoPendiente     Boolean          @default(false) // Si es crédito y pendiente
+    notas             String?
+    cliente           Cliente?         @relation(fields: [clienteId], references: [id])
+    usuario           Usuario          @relation(fields: [usuarioId], references: [id])
+    registroDiario    RegistroDiario   @relation(fields: [registroDiarioId], references: [id])
+    registroDiarioId  Int
+    detalleMayoreo    DetalleMayoreo?  @relation // Relación one-to-one con detalle mayoreo (solo si tipoVenta = MAYOREO)
+    detalleVenta      DetalleVenta?    @relation // Relación one-to-one con detalle venta (solo si tipoVenta = DETALLE)
+  }
+  
+  model DetalleMayoreo {
+    id                Int              @id @default(autoincrement())
+    ventaId           Int              @unique // Vincula one-to-one con Venta
+    pesajes           Pesaje[]         // Múltiples pesajes (canastas)
+    venta             Venta            @relation(fields: [ventaId], references: [id])
+  }
+  
+  model Pesaje {
+    id               Int           @id @default(autoincrement())
+    detalleMayoreoId Int
+    pesoLibras       Float         // Peso de esta canasta
+    fechaPesaje      DateTime      @default(now())
+    notas            String?
+    detalleMayoreo   DetalleMayoreo @relation(fields: [detalleMayoreoId], references: [id])
+  }
+  
+  model DetalleVenta {
+    id                Int              @id @default(autoincrement())
+    ventaId           Int              @unique // Vincula one-to-one con Venta
+    cantidadPescados  Int              // Número de tilapias vendidas
+    pesoTotalLibras   Float            // Peso total de los pescados vendidos
+    venta             Venta            @relation(fields: [ventaId], references: [id])
+  }
+  
+  model RegistroDiario {
+    id                     Int            @id @default(autoincrement())
+    fecha                  DateTime       @unique // Una entrada por día
+    totalMayoreoLibras     Float          @default(0)
+    totalMayoreoPrecio     Float          @default(0)
+    totalDetalleLibras     Float          @default(0)
+    totalDetallePrecio     Float          @default(0)
+    totalPagosPendientes   Float          @default(0) // Suma de pagos pendientes
+    ventas                 Venta[]
+    notas                  String?
+  }
+  
+  model Configuracion {
+    id        Int      @id @default(autoincrement())
+    clave     String   @unique // Ej. "precioVivoDefault", "precioLimpioDefault", "multiplicadorLimpio"
+    valor     String   // Valor como string (convierte a float en app, ej. "2.5")
+    descripcion String? // Opcional: explicación del config
+    actualizadoEn DateTime @updatedAt
+  }

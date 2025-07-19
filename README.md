@@ -1,36 +1,188 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Granja de Pescados - Inmeca
 
-## Getting Started
+Sistema de gestión para granja de pescados (tilapia) con enfoque en ventas al mayoreo y detalle, diseñado para uso móvil.
 
-First, run the development server:
+## 🚀 Características
 
+- **Dashboard** con resumen de ventas del día
+- **Registro de ventas** al mayoreo (con múltiples pesajes) y detalle
+- **Gestión de clientes** con búsqueda y edición
+- **Control de stock** con historial y tendencias
+- **Reportes diarios** con tabla de ventas
+- **Configuración** de precios y parámetros del sistema
+- **Interfaz móvil** optimizada con navegación bottom tabs
+- **Tema verde** personalizado para la granja
+
+## 🛠️ Tecnologías
+
+- **Next.js 15** con App Router
+- **TypeScript** para type safety
+- **Tailwind CSS** para estilos
+- **shadcn/ui** para componentes
+- **Prisma** como ORM
+- **PostgreSQL** como base de datos
+- **Lucide React** para iconos
+
+## 📋 Requisitos Previos
+
+- Node.js 18+ 
+- PostgreSQL
+- npm o yarn
+
+## 🔧 Instalación
+
+1. **Clona el repositorio**
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <tu-repositorio>
+cd granja-inmeca
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. **Instala las dependencias**
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. **Configura las variables de entorno**
+Crea un archivo `.env` en la raíz del proyecto:
+```env
+DATABASE_URL="postgresql://usuario:contraseña@localhost:5432/granja_inmeca"
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. **Configura la base de datos**
+```bash
+# Crea las tablas en la base de datos
+npm run db:push
 
-## Learn More
+# Ejecuta el seed para datos iniciales
+npm run db:seed
+```
 
-To learn more about Next.js, take a look at the following resources:
+5. **Inicia el servidor de desarrollo**
+```bash
+npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+La aplicación estará disponible en `http://localhost:3000`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 📱 Uso de la Aplicación
 
-## Deploy on Vercel
+### Dashboard
+- Vista general de ventas del día
+- Resumen de mayoreo y detalle
+- Stock disponible
+- Acciones rápidas para registrar ventas
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Registrar Ventas
+- **Venta Mayoreo**: Registra ventas por libras con múltiples pesajes de canastas
+- **Venta Detalle**: Registra ventas por cantidad de pescados y peso total
+- Confirmación antes de guardar
+- Cálculo automático de totales
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Gestión de Clientes
+- Lista de clientes con búsqueda
+- Agregar nuevos clientes
+- Editar información existente
+- Clasificación automática (frecuente/ocasional)
+
+### Stock
+- Vista del stock actual
+- Actualización de cantidades
+- Historial de cambios
+- Tendencias y promedios
+
+### Reportes
+- Ventas del día con detalles
+- Totales por tipo de venta
+- Pagos pendientes
+- Tabla con todas las transacciones
+
+### Configuración
+- Precios por defecto para mayoreo y detalle
+- Multiplicadores para pescado limpio
+- Edición de parámetros del sistema
+
+## 🗄️ Estructura de la Base de Datos
+
+La aplicación utiliza un schema de Prisma con las siguientes entidades principales:
+
+- **Venta**: Registro central de todas las ventas
+- **DetalleMayoreo**: Pesajes individuales para ventas al mayoreo
+- **DetalleVenta**: Información específica para ventas al detalle
+- **Cliente**: Información de clientes
+- **StockDetalle**: Control de inventario
+- **RegistroDiario**: Agregados diarios para reportes
+- **Configuracion**: Parámetros del sistema
+
+## 📱 Diseño Móvil
+
+- **Navegación bottom tabs** para fácil acceso
+- **Componentes touch-friendly** con botones grandes
+- **Responsive design** que funciona en tablets y móviles
+- **Tema verde** personalizado para la granja
+
+## 🔄 Scripts Disponibles
+
+```bash
+# Desarrollo
+npm run dev
+
+# Construcción
+npm run build
+
+# Producción
+npm run start
+
+# Base de datos
+npm run db:push    # Sincronizar schema
+npm run db:seed    # Poblar datos iniciales
+npm run db:studio  # Abrir Prisma Studio
+```
+
+## 🎨 Personalización
+
+### Colores
+El tema verde se puede personalizar editando las variables CSS en `app/globals.css`:
+
+```css
+--primary: oklch(0.4 0.15 142);    /* Verde principal */
+--secondary: oklch(0.95 0.05 142); /* Verde secundario */
+--accent: oklch(0.9 0.08 142);     /* Verde de acento */
+```
+
+### Configuraciones
+Los precios y parámetros se pueden modificar desde la página de Configuración o directamente en la base de datos.
+
+## 🚀 Despliegue
+
+### Vercel (Recomendado)
+1. Conecta tu repositorio a Vercel
+2. Configura la variable `DATABASE_URL` en el dashboard
+3. Despliega automáticamente
+
+### Otros Proveedores
+- **Railway**: Soporte nativo para PostgreSQL
+- **Render**: Fácil configuración con PostgreSQL
+- **DigitalOcean**: App Platform con base de datos gestionada
+
+## 📝 Notas de Desarrollo
+
+- La aplicación está optimizada para **SSR/ISR** para mejor performance
+- Los formularios usan **React Hook Form** para validación
+- Las confirmaciones previenen errores de usuario
+- El diseño es **mobile-first** con navegación intuitiva
+
+## 🤝 Contribución
+
+1. Fork el proyecto
+2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
+3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
+4. Push a la rama (`git push origin feature/AmazingFeature`)
+5. Abre un Pull Request
+
+## 📄 Licencia
+
+Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
+
+---
+
+**Desarrollado para Granja de Pescados Inmeca** 🐟
